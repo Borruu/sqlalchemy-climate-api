@@ -31,10 +31,10 @@ def home():
     print("Server received request for 'Home' page...")
     return (
         f"Welcome to the Climate App. Available routes:<br/>"
-        f"/api/v1.0/precipitation"<br/>
-        f"/api/v1.0/stations"<br/>
-        f"/api/v1.0/tobs"<br/>
-        f"/api/v1.0/<start>"<br/>
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/<start><br/>"
         f"/api/v1.0/<start><end>"
     )
 
@@ -45,18 +45,32 @@ def home():
 def precipitation():
     print("Server received request for precipitation information ...")
     session = Session(engine)
-    results = session.query(Measurement.date, Measurement.prcp).\
+    results_output = session.query(Measurement.date, Measurement.prcp).\
         filter(Measurement.date > dt.datetime(2016, 8, 23)
                ).order_by(Measurement.date.desc())
     session.close()
-    for result in results:
-        print(f"{result._asdict()}")
-    data = [((f"{result[0]}, {result[1]}") for result in results)]
-    precip = {key: value for (key, value) in data}   
+    
+    precip = {date: prcp for date, prcp in results_output}
     return jsonify(precip)
-# two methods
+
+
+#     results = list(np.ravel(results_output))
+    
+    
+#     for result in results_output:
+        
+#         print(f"{result._asdict()}")
+
+#     results = list(np.ravel(results_output))
+#     return jsonify(results)
+
+    
+    # data = [((f"{result[0]}, {result[1]}") for result in results_output)]
+    # precip = {key: value for (key, value) in data}   
+    # return jsonify(precip)
+# two methods _____________
 #     prior12_rows = [{"Date": result[0], "Precipitation": result[1]}
-#                 for result in results]
+#                 for result in results_output]
 #     return (f"{prior12_rows}")
 
 if __name__ == "__main__":
