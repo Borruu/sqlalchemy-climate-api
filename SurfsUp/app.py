@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import sqlalchemy
+# from datetime import date
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
@@ -23,7 +24,6 @@ app = Flask(__name__)
 
 # 1. Define what to do when a user hits the index route
 
-
 @app.route("/")
 def home():
     print("Server received request for 'Home' page...")
@@ -32,13 +32,14 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start><end>"
+        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start_end<br/>"
+        f"Replace 'start' and 'end' with dates in YYYYMMDD format<br/>"
+        f"If both start and end date are specified, separate the dates with an underscore as shown above."
     )
 
 # 2. Convert the query results to a dictionary by using date as the key and prcp as the value.
 #    Return the JSON representation of your dictionary.
-
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
@@ -51,8 +52,8 @@ def precipitation():
     precip = {date: prcp for date, prcp in results_output}
     return jsonify(precip)
 
-# 3. Return a JSON list of stations from the dataset.
 
+# 3. Return a JSON list of stations from the dataset.
 
 @app.route("/api/v1.0/stations")
 def stations():
@@ -68,7 +69,6 @@ def stations():
 # 4. Query the dates and temperature observations of the most-active station for the previous year of data.
 #   Return a JSON list of temperature observations for the previous year.
 
-
 @app.route("/api/v1.0/tobs")
 def tobs():
     print("working on tobs query")
@@ -81,5 +81,45 @@ def tobs():
     return jsonify(active12_output)
 
 
+# 5.a. Return the min, max, and average temperatures calculated from the given start date to the end of the dataset
+
+@app.route("/api/v1.0/<start>")
+def startDate(start):
+    print("working on start date query")
+    start_date = dt.date.fromisoformat(start)
+    session = Session(engine)
+    
+    sd_min = session.query(Measurement.date, Measurement.tobs).\
+        filter(Measurement.date > start_date).\
+        order_by(Measurement.tobs).first()
+    session.close()
+    
+    sd_max = session.query(Measurement.date, Measurement.tobs).\
+        filter(Measurement.date > start_date).\
+        order_by(Measurement.tobs.desc()).first()
+    session.close()
+#     sd_max_output = jsonify(list(sd_max))
+#     sd_min_output = jsonify(list(sd_min))
+    return jsonify(list(sd_min))
+    
+
+           
+           
+# 5.b. Return the min, max, and average temperatures calculated from the given start date to the given end date   
+           
+           
+           
 if __name__ == "__main__":
     app.run(debug=True)
+
+           
+           
+           
+           
+           
+           
+            
+            
+           
+           
+           
