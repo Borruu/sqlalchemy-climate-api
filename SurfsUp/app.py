@@ -33,10 +33,10 @@ def home():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start_end<br/>"
-        f"Replace 'start' and 'end' with dates in YYYYMMDD format<br/>"
-        f"If both start and end date are specified, separate the dates with an underscore as shown above."
+        f"/api/v1.0/start/end<br/>"
+        f"Replace 'start' and 'end' with dates in YYYY-MM-DD format<br/>"
     )
+
 
 # 2. Convert the query results to a dictionary by using date as the key and prcp as the value.
 #    Return the JSON representation of your dictionary.
@@ -66,6 +66,7 @@ def stations():
     station_info = {stn: nm for stn, nm in st_count}
     return jsonify(station_info)
 #
+
 # 4. Query the dates and temperature observations of the most-active station for the previous year of data.
 #   Return a JSON list of temperature observations for the previous year.
 
@@ -89,23 +90,44 @@ def startDate(start):
     start_date = dt.date.fromisoformat(start)
     session = Session(engine)
     
-    sd_min = session.query(Measurement.date, Measurement.tobs).\
-        filter(Measurement.date > start_date).\
-        order_by(Measurement.tobs).first()
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).all()
     session.close()
     
-    sd_max = session.query(Measurement.date, Measurement.tobs).\
-        filter(Measurement.date > start_date).\
-        order_by(Measurement.tobs.desc()).first()
-    session.close()
-#     sd_max_output = jsonify(list(sd_max))
-#     sd_min_output = jsonify(list(sd_min))
-    return jsonify(list(sd_min))
-    
+    tempList = []
+    for min, avg, max in results:
+        output_dict = {}
+        output_dict["Min"] = min
+        output_dict["Average"] = avg
+        output_dict["Max"] = max
+        tempList.append(output_dict)
 
-           
-           
-# 5.b. Return the min, max, and average temperatures calculated from the given start date to the given end date   
+    return jsonify(tempList)
+    
+                   
+# 5.b. Return the min, max, and average temperatures calculated from the given start date to the given end date
+
+@app.route("/api/v1.0/<start>/<end>")
+def startEndDate(start, end):
+    print("working on start/end date query")
+    start_date = dt.date.fromisoformat(start)
+    end_date = dt.date.fromisoformat(end)
+    session = Session(engine)
+    
+    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+    session.close()
+    
+    tempList = []
+    for min, avg, max in results:
+        output_dict = {}
+        output_dict["Min"] = min
+        output_dict["Average"] = avg
+        output_dict["Max"] = max
+        tempList.append(output_dict)
+         
+    return jsonify(tempList)
+                     
            
            
            
